@@ -25,9 +25,111 @@ fun JobDetailsScreen(
     viewModel: JobViewModel = hiltViewModel()
 ) {
     val jobDetailState by viewModel.jobDetailState.collectAsState()
+    val applyJobState by viewModel.applyJobState.collectAsState()
+    var showCoverLetterDialog by remember { mutableStateOf(false) }
+    var coverLetterText by remember { mutableStateOf("") }
+    var showApplyDialog by remember { mutableStateOf(false) }
+    var applyDialogTitle by remember { mutableStateOf("") }
+    var applyDialogMessage by remember { mutableStateOf("") }
+    var isApplySuccess by remember { mutableStateOf(false) }
+    var hasApplied by remember { mutableStateOf(false) }
 
     LaunchedEffect(jobId) {
         viewModel.getJobDetails(jobId)
+        hasApplied = false // Reset when viewing a different job
+    }
+
+    LaunchedEffect(applyJobState) {
+        when (applyJobState) {
+            is Resource.Success -> {
+                applyDialogTitle = "Success"
+                applyDialogMessage = "Your application has been submitted successfully!"
+                isApplySuccess = true
+                hasApplied = true // Mark as applied
+                showApplyDialog = true
+                viewModel.resetApplyJobState()
+            }
+            is Resource.Error -> {
+                applyDialogTitle = "Application Failed"
+                applyDialogMessage = (applyJobState as Resource.Error).message ?: "Failed to apply to job"
+                isApplySuccess = false
+                showApplyDialog = true
+                viewModel.resetApplyJobState()
+            }
+            else -> {}
+        }
+    }
+
+    // Cover Letter Dialog
+    if (showCoverLetterDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showCoverLetterDialog = false
+                coverLetterText = ""
+            },
+            title = { Text("Apply to Job") },
+            text = {
+                Column {
+                    Text(
+                        text = "Please write a cover letter to introduce yourself and explain why you're a good fit for this position.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    OutlinedTextField(
+                        value = coverLetterText,
+                        onValueChange = { coverLetterText = it },
+                        label = { Text("Cover Letter") },
+                        placeholder = { Text("I am very interested in this position and believe my skills align perfectly with your requirements...") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        maxLines = 10,
+                        supportingText = {
+                            Text("${coverLetterText.length} characters")
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (coverLetterText.isNotBlank()) {
+                            viewModel.applyToJob(jobId, coverLetterText)
+                            showCoverLetterDialog = false
+                            coverLetterText = ""
+                        }
+                    },
+                    enabled = coverLetterText.isNotBlank()
+                ) {
+                    Text("Submit Application")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showCoverLetterDialog = false
+                    coverLetterText = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Result Dialog
+    if (showApplyDialog) {
+        AlertDialog(
+            onDismissRequest = { showApplyDialog = false },
+            title = { Text(applyDialogTitle) },
+            text = { Text(applyDialogMessage) },
+            confirmButton = {
+                Button(onClick = { showApplyDialog = false }) {
+                    Text("OK")
+                }
+            },
+            icon = if (isApplySuccess) {
+                { Icon(Icons.Default.Info, contentDescription = null) }
+            } else null
+        )
     }
 
     Scaffold(
@@ -214,6 +316,29 @@ fun JobDetailsScreen(
                                 if (job.recruiterEmail != null) {
                                     Text("Contact: ${job.recruiterEmail}")
                                 }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Apply Button
+                        Button(
+                            onClick = { showCoverLetterDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            enabled = !hasApplied && applyJobState !is Resource.Loading
+                        ) {
+                            if (applyJobState is Resource.Loading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Text(
+                                    text = if (hasApplied) "Applied" else "Apply to this Job",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
                             }
                         }
 

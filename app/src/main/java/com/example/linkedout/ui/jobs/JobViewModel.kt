@@ -33,6 +33,9 @@ class JobViewModel @Inject constructor(
     private val _applicantsState = MutableStateFlow<Resource<JobApplicantsResponse>?>(null)
     val applicantsState: StateFlow<Resource<JobApplicantsResponse>?> = _applicantsState.asStateFlow()
 
+    private val _applyJobState = MutableStateFlow<Resource<Unit>?>(null)
+    val applyJobState: StateFlow<Resource<Unit>?> = _applyJobState.asStateFlow()
+
     // Recruiter methods
     fun getRecruiterJobs() {
         viewModelScope.launch {
@@ -116,11 +119,23 @@ class JobViewModel @Inject constructor(
         }
     }
 
+    fun applyToJob(jobId: Int, coverLetter: String) {
+        viewModelScope.launch {
+            repository.applyToJob(jobId, coverLetter).collect { result ->
+                _applyJobState.value = result
+            }
+        }
+    }
+
     fun resetCreateJobState() {
         _createJobState.value = null
     }
 
     fun resetDeleteJobState() {
         _deleteJobState.value = null
+    }
+
+    fun resetApplyJobState() {
+        _applyJobState.value = null
     }
 }

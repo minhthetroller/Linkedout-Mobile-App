@@ -65,6 +65,12 @@ interface ApiService {
         @Query("limit") limit: Int = 20
     ): ApiResponse<JobListResponse>
 
+    @POST("jobs/{id}/apply")
+    suspend fun applyToJob(
+        @Path("id") jobId: Int,
+        @Body request: ApplyJobRequest
+    ): ApiResponse<Unit>
+
     // File Uploads
     @Multipart
     @POST("upload/resume")
