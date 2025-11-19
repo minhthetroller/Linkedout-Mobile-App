@@ -71,3 +71,7 @@ data class Pagination(
     val pages: Int
 )
 
+data class ApplyJobRequest(
+    val cover_letter: String
+)
+

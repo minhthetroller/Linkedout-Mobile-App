@@ -245,6 +245,35 @@ class LinkedOutRepository @Inject constructor(
         }
     }
 
+    fun applyToJob(jobId: Int, coverLetter: String): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            val request = ApplyJobRequest(cover_letter = coverLetter)
+            val response = apiService.applyToJob(jobId, request)
+            if (response.success) {
+                emit(Resource.Success(Unit))
+            } else {
+                emit(Resource.Error(response.message ?: "Failed to apply to job"))
+            }
+        } catch (e: retrofit2.HttpException) {
+            val errorMessage = when (e.code()) {
+                400 -> "You have already applied to this job"
+                401 -> "Please login to apply"
+                403 -> "Please complete your profile before applying"
+                404 -> "Job not found"
+                500 -> "Server error. Please try again later"
+                else -> e.message() ?: "Failed to apply"
+            }
+            emit(Resource.Error(errorMessage))
+        } catch (e: java.net.UnknownHostException) {
+            emit(Resource.Error("Network error. Please check your internet connection"))
+        } catch (e: java.net.SocketTimeoutException) {
+            emit(Resource.Error("Connection timeout. Please try again"))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Failed to apply to job"))
+        }
+    }
+
     // File upload methods
     fun uploadResume(file: File): Flow<Resource<String>> = flow {
         emit(Resource.Loading())
