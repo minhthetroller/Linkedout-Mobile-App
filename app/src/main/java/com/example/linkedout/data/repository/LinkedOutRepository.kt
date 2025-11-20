@@ -194,6 +194,35 @@ class LinkedOutRepository @Inject constructor(
         }
     }
 
+    fun getApplicantDetails(applicationId: Int): Flow<Resource<Applicant>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = apiService.getApplicantDetails(applicationId)
+            if (response.success && response.data != null) {
+                emit(Resource.Success(response.data.application))
+            } else {
+                emit(Resource.Error(response.message ?: "Failed to load applicant details"))
+            }
+        } catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Network error"))
+        }
+    }
+
+    fun updateApplicationStatus(applicationId: Int, status: String): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            val request = UpdateApplicationStatusRequest(status)
+            val response = apiService.updateApplicationStatus(applicationId, request)
+            if (response.success) {
+                emit(Resource.Success(Unit))
+            } else {
+                emit(Resource.Error(response.message ?: "Failed to update status"))
+            }
+        } catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Network error"))
+        }
+    }
+
     // Job methods - Seeker
     fun browseJobs(
         location: String? = null,
@@ -248,7 +277,7 @@ class LinkedOutRepository @Inject constructor(
     fun applyToJob(jobId: Int, coverLetter: String): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
-            val request = ApplyJobRequest(cover_letter = coverLetter)
+            val request = ApplyJobRequest(coverLetter = coverLetter)
             val response = apiService.applyToJob(jobId, request)
             if (response.success) {
                 emit(Resource.Success(Unit))
@@ -271,6 +300,32 @@ class LinkedOutRepository @Inject constructor(
             emit(Resource.Error("Connection timeout. Please try again"))
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "Failed to apply to job"))
+        }
+    }
+
+    fun getSeekerApplications(status: String? = null, page: Int = 1, limit: Int = 20): Flow<Resource<SeekerApplicationsResponse>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = apiService.getSeekerApplications(status, page, limit)
+            if (response.success && response.data != null) {
+                emit(Resource.Success(response.data))
+            } else {
+                emit(Resource.Error(response.message ?: "Failed to load applications"))
+            }
+        } catch (e: retrofit2.HttpException) {
+            val errorMessage = when (e.code()) {
+                401 -> "Please login to view applications"
+                403 -> "Access denied"
+                500 -> "Server error. Please try again later"
+                else -> e.message() ?: "Failed to load applications"
+            }
+            emit(Resource.Error(errorMessage))
+        } catch (e: java.net.UnknownHostException) {
+            emit(Resource.Error("Network error. Please check your internet connection"))
+        } catch (e: java.net.SocketTimeoutException) {
+            emit(Resource.Error("Connection timeout. Please try again"))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Failed to load applications"))
         }
     }
 
