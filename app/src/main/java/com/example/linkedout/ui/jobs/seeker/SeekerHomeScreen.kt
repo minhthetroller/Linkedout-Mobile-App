@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
@@ -26,6 +27,7 @@ fun SeekerHomeScreen(
     onNavigateToJobDetails: (Int) -> Unit,
     onNavigateToSearch: () -> Unit,
     onNavigateToRecommended: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit,
     viewModel: JobViewModel = hiltViewModel()
 ) {
@@ -42,6 +44,9 @@ fun SeekerHomeScreen(
                 actions = {
                     IconButton(onClick = onNavigateToSearch) {
                         Icon(Icons.Default.Search, "Search")
+                    }
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(Icons.Default.AccountCircle, "Profile")
                     }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, "Logout")
@@ -191,7 +196,7 @@ fun JobCard(job: Job, onClick: () -> Unit) {
                 AssistChip(
                     onClick = {},
                     label = { Text(job.employmentType) },
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
                 )
             }
 

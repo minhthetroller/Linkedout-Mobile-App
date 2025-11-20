@@ -10,11 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.linkedout.util.Resource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onNavigateToSignUp: () -> Unit,
@@ -38,12 +38,104 @@ fun LoginScreen(
             }
             is Resource.Error -> {
                 showError = true
-                errorMessage = (authState as Resource.Error).message ?: "Login failed"
+                errorMessage = if ((authState as Resource.Error).message?.contains("401") == true) {
+                    "Invalid credentials"
+                } else {
+                    (authState as Resource.Error).message ?: "Login failed"
+                }
             }
             else -> {}
         }
     }
 
+    LoginScreenContent(
+        email = email,
+        password = password,
+        showError = showError,
+        errorMessage = errorMessage,
+        isLoading = authState is Resource.Loading,
+        onEmailChange = { email = it },
+        onPasswordChange = { password = it },
+        onLoginClick = {
+            if (email.isNotBlank() && password.isNotBlank()) {
+                showError = false
+                viewModel.login(email, password)
+            } else {
+                showError = true
+                errorMessage = "Please fill in all fields"
+            }
+        },
+        onNavigateToSignUp = onNavigateToSignUp
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    MaterialTheme {
+        LoginScreenContent(
+            email = "john.doe@example.com",
+            password = "password123",
+            showError = false,
+            errorMessage = "",
+            isLoading = false,
+            onEmailChange = {},
+            onPasswordChange = {},
+            onLoginClick = {},
+            onNavigateToSignUp = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenErrorPreview() {
+    MaterialTheme {
+        LoginScreenContent(
+            email = "john.doe@example.com",
+            password = "wrong",
+            showError = true,
+            errorMessage = "Invalid credentials",
+            isLoading = false,
+            onEmailChange = {},
+            onPasswordChange = {},
+            onLoginClick = {},
+            onNavigateToSignUp = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenLoadingPreview() {
+    MaterialTheme {
+        LoginScreenContent(
+            email = "john.doe@example.com",
+            password = "password123",
+            showError = false,
+            errorMessage = "",
+            isLoading = true,
+            onEmailChange = {},
+            onPasswordChange = {},
+            onLoginClick = {},
+            onNavigateToSignUp = {}
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LoginScreenContent(
+    email: String,
+    password: String,
+    showError: Boolean,
+    errorMessage: String,
+    isLoading: Boolean,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onLoginClick: () -> Unit,
+    onNavigateToSignUp: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -68,7 +160,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = onEmailChange,
                 label = { Text("Email") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
@@ -79,7 +171,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = onPasswordChange,
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -98,19 +190,11 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = {
-                    if (email.isNotBlank() && password.isNotBlank()) {
-                        showError = false
-                        viewModel.login(email, password)
-                    } else {
-                        showError = true
-                        errorMessage = "Please fill in all fields"
-                    }
-                },
+                onClick = onLoginClick,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = authState !is Resource.Loading
+                enabled = !isLoading
             ) {
-                if (authState is Resource.Loading) {
+                if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary

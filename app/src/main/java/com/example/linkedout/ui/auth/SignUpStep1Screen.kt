@@ -2,20 +2,21 @@ package com.example.linkedout.ui.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.linkedout.util.Resource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpStep1Screen(
     onNavigateToStep2: (String) -> Unit,
@@ -46,13 +47,156 @@ fun SignUpStep1Screen(
         }
     }
 
+    SignUpStep1Content(
+        email = email,
+        password = password,
+        fullName = fullName,
+        birthDate = birthDate,
+        userType = userType,
+        showError = showError,
+        errorMessage = errorMessage,
+        isLoading = authState is Resource.Loading,
+        onEmailChange = { email = it },
+        onPasswordChange = { password = it },
+        onFullNameChange = { fullName = it },
+        onBirthDateChange = { birthDate = it },
+        onUserTypeChange = { userType = it },
+        onNextClick = {
+            if (fullName.isNotBlank() && email.isNotBlank() &&
+                password.length >= 6 && birthDate.isNotBlank()) {
+                showError = false
+                viewModel.signUpStep1(email, password, userType, fullName, birthDate)
+            } else {
+                showError = true
+                errorMessage = "Please fill in all fields correctly"
+            }
+        },
+        onNavigateBack = onNavigateBack
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SignUpStep1SeekerPreview() {
+    MaterialTheme {
+        SignUpStep1Content(
+            email = "john.doe@example.com",
+            password = "password123",
+            fullName = "John Doe",
+            birthDate = "1995-06-15",
+            userType = "seeker",
+            showError = false,
+            errorMessage = "",
+            isLoading = false,
+            onEmailChange = {},
+            onPasswordChange = {},
+            onFullNameChange = {},
+            onBirthDateChange = {},
+            onUserTypeChange = {},
+            onNextClick = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SignUpStep1RecruiterPreview() {
+    MaterialTheme {
+        SignUpStep1Content(
+            email = "recruiter@company.com",
+            password = "secure123",
+            fullName = "Jane Smith",
+            birthDate = "1990-03-20",
+            userType = "recruiter",
+            showError = false,
+            errorMessage = "",
+            isLoading = false,
+            onEmailChange = {},
+            onPasswordChange = {},
+            onFullNameChange = {},
+            onBirthDateChange = {},
+            onUserTypeChange = {},
+            onNextClick = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SignUpStep1ErrorPreview() {
+    MaterialTheme {
+        SignUpStep1Content(
+            email = "invalid-email",
+            password = "123",
+            fullName = "",
+            birthDate = "",
+            userType = "seeker",
+            showError = true,
+            errorMessage = "Please fill in all fields correctly",
+            isLoading = false,
+            onEmailChange = {},
+            onPasswordChange = {},
+            onFullNameChange = {},
+            onBirthDateChange = {},
+            onUserTypeChange = {},
+            onNextClick = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SignUpStep1LoadingPreview() {
+    MaterialTheme {
+        SignUpStep1Content(
+            email = "john.doe@example.com",
+            password = "password123",
+            fullName = "John Doe",
+            birthDate = "1995-06-15",
+            userType = "seeker",
+            showError = false,
+            errorMessage = "",
+            isLoading = true,
+            onEmailChange = {},
+            onPasswordChange = {},
+            onFullNameChange = {},
+            onBirthDateChange = {},
+            onUserTypeChange = {},
+            onNextClick = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SignUpStep1Content(
+    email: String,
+    password: String,
+    fullName: String,
+    birthDate: String,
+    userType: String,
+    showError: Boolean,
+    errorMessage: String,
+    isLoading: Boolean,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onFullNameChange: (String) -> Unit,
+    onBirthDateChange: (String) -> Unit,
+    onUserTypeChange: (String) -> Unit,
+    onNextClick: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Sign Up - Step 1") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Text("←")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 }
             )
@@ -84,13 +228,13 @@ fun SignUpStep1Screen(
             ) {
                 FilterChip(
                     selected = userType == "seeker",
-                    onClick = { userType = "seeker" },
+                    onClick = { onUserTypeChange("seeker") },
                     label = { Text("Job Seeker") },
                     modifier = Modifier.weight(1f)
                 )
                 FilterChip(
                     selected = userType == "recruiter",
-                    onClick = { userType = "recruiter" },
+                    onClick = { onUserTypeChange("recruiter") },
                     label = { Text("Recruiter") },
                     modifier = Modifier.weight(1f)
                 )
@@ -100,7 +244,7 @@ fun SignUpStep1Screen(
 
             OutlinedTextField(
                 value = fullName,
-                onValueChange = { fullName = it },
+                onValueChange = onFullNameChange,
                 label = { Text("Full Name") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -110,7 +254,7 @@ fun SignUpStep1Screen(
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = onEmailChange,
                 label = { Text("Email") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
@@ -121,7 +265,7 @@ fun SignUpStep1Screen(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = onPasswordChange,
                 label = { Text("Password (min 6 characters)") },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -133,7 +277,7 @@ fun SignUpStep1Screen(
 
             OutlinedTextField(
                 value = birthDate,
-                onValueChange = { birthDate = it },
+                onValueChange = onBirthDateChange,
                 label = { Text("Birth Date (YYYY-MM-DD)") },
                 placeholder = { Text("1995-06-15") },
                 modifier = Modifier.fillMaxWidth(),
@@ -151,20 +295,11 @@ fun SignUpStep1Screen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = {
-                    if (fullName.isNotBlank() && email.isNotBlank() &&
-                        password.length >= 6 && birthDate.isNotBlank()) {
-                        showError = false
-                        viewModel.signUpStep1(email, password, userType, fullName, birthDate)
-                    } else {
-                        showError = true
-                        errorMessage = "Please fill in all fields correctly"
-                    }
-                },
+                onClick = onNextClick,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = authState !is Resource.Loading
+                enabled = !isLoading
             ) {
-                if (authState is Resource.Loading) {
+                if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary

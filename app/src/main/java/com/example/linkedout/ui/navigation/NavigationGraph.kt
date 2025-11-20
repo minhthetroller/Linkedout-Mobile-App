@@ -14,9 +14,12 @@ import com.example.linkedout.ui.jobs.seeker.SeekerHomeScreen
 import com.example.linkedout.ui.jobs.seeker.JobDetailsScreen
 import com.example.linkedout.ui.jobs.seeker.RecommendedJobsScreen
 import com.example.linkedout.ui.jobs.seeker.SearchJobsScreen
+import com.example.linkedout.ui.profile.SeekerProfileScreen
+import com.example.linkedout.ui.profile.RecruiterProfileScreen
 import com.example.linkedout.ui.jobs.recruiter.RecruiterHomeScreen
 import com.example.linkedout.ui.jobs.recruiter.CreateJobScreen
 import com.example.linkedout.ui.jobs.recruiter.JobApplicantsScreen
+import com.example.linkedout.ui.jobs.recruiter.ApplicantDetailsScreen
 
 @Composable
 fun NavigationGraph(
@@ -105,7 +108,18 @@ fun NavigationGraph(
                 onNavigateToRecommended = {
                     navController.navigate(Screen.RecommendedJobs.route)
                 },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.SeekerProfile.route)
+                },
                 onLogout = onLogout
+            )
+        }
+
+        composable(Screen.SeekerProfile.route) {
+            SeekerProfileScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -156,6 +170,9 @@ fun NavigationGraph(
                 onNavigateToApplicants = { jobId: Int ->
                     navController.navigate(Screen.JobApplicants.createRoute(jobId))
                 },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.RecruiterProfile.route)
+                },
                 onLogout = onLogout
             )
         }
@@ -189,6 +206,30 @@ fun NavigationGraph(
             val jobId = backStackEntry.arguments?.getInt("jobId") ?: 0
             JobApplicantsScreen(
                 jobId = jobId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onApplicantClick = { applicationId ->
+                    navController.navigate(Screen.ApplicantDetails.createRoute(applicationId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ApplicantDetails.route,
+            arguments = listOf(navArgument("applicationId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val applicationId = backStackEntry.arguments?.getInt("applicationId") ?: 0
+            ApplicantDetailsScreen(
+                applicationId = applicationId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.RecruiterProfile.route) {
+            RecruiterProfileScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

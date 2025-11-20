@@ -44,6 +44,15 @@ interface ApiService {
     @GET("recruiter/jobs/{id}/applicants")
     suspend fun getJobApplicants(@Path("id") jobId: Int): ApiResponse<JobApplicantsResponse>
 
+    @GET("recruiter/applications/{id}")
+    suspend fun getApplicantDetails(@Path("id") applicationId: Int): ApiResponse<ApplicantDetailsResponse>
+
+    @PUT("recruiter/applications/{id}/status")
+    suspend fun updateApplicationStatus(
+        @Path("id") applicationId: Int,
+        @Body request: UpdateApplicationStatusRequest
+    ): ApiResponse<Unit>
+
     // Jobs - Seeker
     @GET("jobs")
     suspend fun browseJobs(
@@ -70,6 +79,13 @@ interface ApiService {
         @Path("id") jobId: Int,
         @Body request: ApplyJobRequest
     ): ApiResponse<Unit>
+
+    @GET("seeker/applications")
+    suspend fun getSeekerApplications(
+        @Query("status") status: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): ApiResponse<SeekerApplicationsResponse>
 
     // File Uploads
     @Multipart

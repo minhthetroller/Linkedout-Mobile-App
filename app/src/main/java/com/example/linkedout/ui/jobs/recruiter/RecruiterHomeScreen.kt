@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -24,6 +25,7 @@ fun RecruiterHomeScreen(
     onNavigateToCreateJob: () -> Unit,
     onNavigateToEditJob: (Int) -> Unit,
     onNavigateToApplicants: (Int) -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit,
     viewModel: JobViewModel = hiltViewModel()
 ) {
@@ -62,6 +64,9 @@ fun RecruiterHomeScreen(
             TopAppBar(
                 title = { Text("My Job Postings") },
                 actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(Icons.Default.AccountCircle, "Profile")
+                    }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, "Logout")
                     }
@@ -225,9 +230,12 @@ fun RecruiterJobCard(
             }
 
             if (!job.tags.isNullOrEmpty()) {
-                Row(
-                    modifier = Modifier.padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy((-8).dp)
                 ) {
                     job.tags.take(3).forEach { tag ->
                         AssistChip(

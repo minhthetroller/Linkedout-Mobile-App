@@ -33,8 +33,20 @@ class JobViewModel @Inject constructor(
     private val _applicantsState = MutableStateFlow<Resource<JobApplicantsResponse>?>(null)
     val applicantsState: StateFlow<Resource<JobApplicantsResponse>?> = _applicantsState.asStateFlow()
 
+    private val _applicantState = MutableStateFlow<Resource<Applicant>?>(Resource.Loading())
+    val applicantState: StateFlow<Resource<Applicant>?> = _applicantState.asStateFlow()
+
+    private val _updateApplicationStatusState = MutableStateFlow<Resource<Unit>?>(null)
+    val updateApplicationStatusState: StateFlow<Resource<Unit>?> = _updateApplicationStatusState.asStateFlow()
+
     private val _applyJobState = MutableStateFlow<Resource<Unit>?>(null)
     val applyJobState: StateFlow<Resource<Unit>?> = _applyJobState.asStateFlow()
+
+    private val _profileImageSignedUrl = MutableStateFlow<String?>(null)
+    val profileImageSignedUrl: StateFlow<String?> = _profileImageSignedUrl.asStateFlow()
+
+    private val _resumeSignedUrl = MutableStateFlow<String?>(null)
+    val resumeSignedUrl: StateFlow<String?> = _resumeSignedUrl.asStateFlow()
 
     // Recruiter methods
     fun getRecruiterJobs() {
@@ -78,6 +90,50 @@ class JobViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getJobApplicants(jobId).collect { result ->
                 _applicantsState.value = result
+            }
+        }
+    }
+
+    fun getApplicantDetails(applicationId: Int) {
+        viewModelScope.launch {
+            repository.getApplicantDetails(applicationId).collect { result ->
+                _applicantState.value = result
+                // Fetch signed URLs if available
+                if (result is Resource.Success && result.data != null) {
+                    result.data.profileImageS3Url?.let { fetchProfileImageSignedUrl(it) }
+                    result.data.resumeS3Url?.let { fetchResumeSignedUrl(it) }
+                }
+            }
+        }
+    }
+
+    private fun fetchProfileImageSignedUrl(s3Url: String) {
+        viewModelScope.launch {
+            repository.getSignedUrl(s3Url).collect { resource ->
+                if (resource is Resource.Success) {
+                    _profileImageSignedUrl.value = resource.data
+                }
+            }
+        }
+    }
+
+    private fun fetchResumeSignedUrl(s3Url: String) {
+        viewModelScope.launch {
+            repository.getSignedUrl(s3Url).collect { resource ->
+                if (resource is Resource.Success) {
+                    _resumeSignedUrl.value = resource.data
+                }
+            }
+        }
+    }
+
+    fun updateApplicationStatus(applicationId: Int, status: String) {
+        viewModelScope.launch {
+            repository.updateApplicationStatus(applicationId, status).collect { result ->
+                _updateApplicationStatusState.value = result
+                if (result is Resource.Success) {
+                    getApplicantDetails(applicationId) // Refresh details
+                }
             }
         }
     }

@@ -23,6 +23,7 @@ import com.example.linkedout.util.Resource
 fun JobApplicantsScreen(
     jobId: Int,
     onNavigateBack: () -> Unit,
+    onApplicantClick: (Int) -> Unit, // Add this parameter
     viewModel: JobViewModel = hiltViewModel()
 ) {
     val applicantsState by viewModel.applicantsState.collectAsState()
@@ -81,7 +82,10 @@ fun JobApplicantsScreen(
                             )
                         }
                         items(response.applicants) { applicant ->
-                            ApplicantCard(applicant = applicant)
+                            ApplicantCard(
+                                applicant = applicant,
+                                onClick = { onApplicantClick(applicant.applicationId) } // Pass the click handler
+                            )
                         }
                     }
                 }
@@ -101,9 +105,13 @@ fun JobApplicantsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class) // Add this annotation
 @Composable
-fun ApplicantCard(applicant: Applicant) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+fun ApplicantCard(applicant: Applicant, onClick: () -> Unit) { // Add onClick parameter
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick // Use the onClick parameter
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = applicant.fullName,
@@ -132,4 +140,3 @@ fun ApplicantCard(applicant: Applicant) {
         }
     }
 }
-
